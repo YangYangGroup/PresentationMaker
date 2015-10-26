@@ -92,7 +92,7 @@
 }
 -(void)addClick
 {
-    _titleViewControl = [[UIControl alloc]initWithFrame:CGRectMake(0, 64, self.view.bounds.size.width, self.view.bounds.size.height-64)];
+    _titleViewControl = [[UIControl alloc]initWithFrame:CGRectMake(0, 64, self.view.bounds.size.width, self.view.bounds.size.height+5)];
     _titleViewControl.backgroundColor = [UIColor grayColor];
     
     UILabel *titleLabel = [[UILabel alloc]init];
