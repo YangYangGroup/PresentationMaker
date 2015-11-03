@@ -14,10 +14,9 @@
 #import "PreviewViewController.h"
 #import "EditNowViewController.h"
 
-
-@interface CreationEditViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UIActionSheetDelegate,UIWebViewDelegate, UITextViewDelegate>
+@interface CreationEditViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UIActionSheetDelegate,UIWebViewDelegate,UITextViewDelegate,UIAlertViewDelegate>
 @property (nonatomic, retain) UIView *backgorundView;
-@property (nonatomic, strong) UICollectionView *collectionView;
+@property (nonatomic, strong) UICollectionView*collectionView;
 @property (nonatomic, strong) UIView *footerView;
 @property (nonatomic, retain) UIImageView *imageView;
 @property (nonatomic, retain) NSMutableArray *htmeArray;
@@ -32,10 +31,8 @@
 @property (nonatomic, strong) NSString *maxSummaryIdStr;//取summary表中最大的主键值
 @property (nonatomic, strong) NSString *summaryNameStr;
 @property (nonatomic, strong) NSString *returnTempleIdStr;
-
 @property (nonatomic, strong) UIControl *titleViewControl;
 @property (nonatomic, strong) UITextView *titleTextView;
-
 @end
 
 @implementation CreationEditViewController
@@ -48,14 +45,16 @@
         [self.htmeArray addObject:sender.object];
         self.returnTempleIdStr = [NSString stringWithFormat:@"%@",sender.object];
         
-//        NSInteger strInteger = indexPath.row +1;
-//        NSString *str = [NSString stringWithFormat:@"%ld",(long)strInteger];
         NSString *htmlStr = [[NSString alloc]init];
         htmlStr = [DBDaoHelper selectCreationPageString:self.returnTempleIdStr];
+        // 根据 summary id 查询最大的 page number
+        NSString *maxPageNumber = [DBDaoHelper getMaxPageNumber:self.maxSummaryIdStr];
         
-            NSLog(@"%@",htmlStr);
-            NSLog(@"%ld",(long)self.maxSummaryIdStr);
-        [DBDaoHelper insertHtmlToDetailsSummaryIdWith:self.maxSummaryIdStr TemplateId:self.returnTempleIdStr HtmlCode:htmlStr];
+        // 根据summary id 修改最后一页的page number 为最大的page number
+        [DBDaoHelper updatePageNumberToMaxNumber:self.maxSummaryIdStr pageNumber:maxPageNumber];
+        
+        //等待修改 插入
+        [DBDaoHelper insertHtmlToDetailsSummaryIdWith:self.maxSummaryIdStr TemplateId:self.returnTempleIdStr HtmlCode:htmlStr PageNumber:maxPageNumber];
     }
 }
 -(void)dealloc
@@ -68,8 +67,7 @@
 //    self.navigationItem.hidesBackButton =YES;//隐藏系统自带导航栏按钮
     self.navigationItem.title=self.summaryNameStr;
     NSLog(@"133%@",self.navigationController.viewControllers);
-    //监听返回的
-    
+
     self.detailsArray = [DBDaoHelper selectDetailsDataBySummaryId:self.maxSummaryIdStr];
     
     [self.collectionView reloadData];
@@ -82,21 +80,21 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(collectionCellAdd:) name:@"EditNotification" object:nil];
-    self.view.backgroundColor = [UIColor blackColor];
+//    self.view.backgroundColor = [UIColor blackColor];
     [self addNavigation];
     [self addCollectionView];
     [self addClick];
-    //    [self addFooter];
-    
     _fullPath = [[NSString alloc]init];
 }
 -(void)addClick
 {
-    _titleViewControl = [[UIControl alloc]initWithFrame:CGRectMake(0, 64, self.view.bounds.size.width, self.view.bounds.size.height+5)];
-    _titleViewControl.backgroundColor = [UIColor grayColor];
+    self.navigationController.navigationBarHidden =YES;//隐藏系统自带导航栏按钮
+    _titleViewControl = [[UIControl alloc]initWithFrame:CGRectMake(0, 20, KScreenWidth, KScreenHeight+5)];
+    _titleViewControl.backgroundColor = [UIColor blackColor];
     
     UILabel *titleLabel = [[UILabel alloc]init];
     titleLabel.frame = CGRectMake(20, 20, KScreenWidth, 30);
+    titleLabel.textColor = [UIColor whiteColor];
     titleLabel.text = @"Presentation name:";
     [_titleViewControl addSubview:titleLabel];
     
@@ -106,7 +104,7 @@
     _titleTextView.layer.cornerRadius = 6;
     _titleTextView.layer.masksToBounds = YES;
     _titleTextView.backgroundColor = [UIColor whiteColor];
-//    [_titleTextView setText: @"aa"];
+    //    [_titleTextView setText: @"aa"];
     [_titleTextView becomeFirstResponder];
     [_titleViewControl addSubview:_titleTextView];
     
@@ -115,7 +113,7 @@
     okButton.frame = CGRectMake(20 , 30 + KScreenHeight*0.25 + 40, KScreenWidth-40, 40);
     [okButton setTitle:@"OK" forState:UIControlStateNormal];
     [okButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    okButton.backgroundColor = [UIColor darkGrayColor];
+    okButton.backgroundColor = [UIColor blackColor];
     okButton.titleLabel.font = [UIFont systemFontOfSize:18.0];
     [okButton.layer setMasksToBounds:YES];
     
@@ -123,18 +121,24 @@
     [okButton.layer setCornerRadius:7.0];
     okButton.layer.borderColor = [UIColor whiteColor].CGColor;
     [_titleViewControl addSubview:okButton];
-
+    
     [okButton addTarget:self action:@selector(saveSummaryTile) forControlEvents:UIControlEventTouchUpInside];
-   
+    
     [self.view addSubview:_titleViewControl];
     [self.view bringSubviewToFront:_titleViewControl];
-
 }
 -(void)saveSummaryTile{
     self.summaryNameStr = _titleTextView.text;
     self.maxSummaryIdStr = [DBDaoHelper insertSummaryWithName:_titleTextView.text];
-    [_titleViewControl removeFromSuperview ];
+    [_titleViewControl removeFromSuperview];
     _titleViewControl = nil;
+    self.navigationController.navigationBarHidden =NO;
+    //像details表添加2条数据 首页 尾页
+    [DBDaoHelper insertHtmlToDetailsSummaryIdWith:self.maxSummaryIdStr TemplateId:@"1" HtmlCode:template_1 PageNumber:@"1"];
+    [DBDaoHelper insertHtmlToDetailsSummaryIdWith:self.maxSummaryIdStr TemplateId:@"5" HtmlCode:template_5 PageNumber:@"2"];
+    //查询details表
+    self.detailsArray = [DBDaoHelper selectDetailsDataBySummaryId:self.maxSummaryIdStr];
+    [self.collectionView reloadData];
 }
 -(void)addNavigation
 {
@@ -194,7 +198,6 @@
     NSLog(@"%@",_fullPath);
     [self loadHtmlToWebView];
     // 将图片写入文件
-    
     
     [imageData writeToFile:_fullPath atomically:NO];
     
@@ -276,8 +279,8 @@
     
     UICollectionViewFlowLayout *flowLayout=[[UICollectionViewFlowLayout alloc] init];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionHorizontal];
-    flowLayout.footerReferenceSize = CGSizeMake(KScreenWidth-20, KScreenHeight-64-40);//头部.尾部设置
-    self.collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(10, 84, KScreenWidth-20, KScreenHeight-64-40) collectionViewLayout:flowLayout];
+    flowLayout.footerReferenceSize = CGSizeMake(KScreenWidth, KScreenHeight-64-40);//头部.尾部设置
+    self.collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(0, 64, KScreenWidth, KScreenHeight-64-20) collectionViewLayout:flowLayout];
     self.collectionView.backgroundColor = [UIColor whiteColor];
     
     //设置代理
@@ -289,12 +292,12 @@
     [self.collectionView registerClass:[CollectionViewCell class] forCellWithReuseIdentifier:@"cell"];
     [self.collectionView registerClass:[UICollectionReusableView class] forSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"ReusableView"];
     
-    _footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, KScreenWidth-20, KScreenHeight-64-40)];
+    _footerView = [[UIView alloc]initWithFrame:CGRectMake(20, 30, KScreenWidth-40, KScreenHeight-64-30)];
     _footerView.backgroundColor = [UIColor blackColor];
     
     //添加界面
     UIButton *addPageBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-    addPageBtn.frame = CGRectMake((KScreenWidth-120)/2, 185, 120, 60);
+    addPageBtn.frame = CGRectMake((KScreenWidth-40-120)/2, 185, 120, 60);
     addPageBtn.tintColor = [UIColor whiteColor];
     addPageBtn.layer.borderWidth = 1;
     addPageBtn.layer.borderColor = [UIColor whiteColor].CGColor;
@@ -315,13 +318,9 @@
     
 
     UINavigationController * navigation = [[UINavigationController alloc]initWithRootViewController:loginVC];
-    
+    loginVC.selectTemplateIndex = self.selectTemplateIndex;
     [self presentViewController:navigation animated:YES completion:nil];
     
-    
-//    AddEditViewController *vc = [[AddEditViewController alloc]init];
-//    
-//    [self.navigationController pushViewController:vc animated:YES];
 }
 -(void)addTableClick
 {
@@ -359,7 +358,7 @@
     aview.frame = CGRectMake(0, 0, 0, 0);
     [cell addSubview:aview];
     self.webView = [[UIWebView alloc]init];
-    self.webView.frame = CGRectMake(0, 0, KScreenWidth-20, KScreenHeight-64-40);
+    self.webView.frame = CGRectMake(20, 20, KScreenWidth-40, KScreenHeight-64-20);
     self.webView.tag = indexPath.row;
     self.webView.backgroundColor = [UIColor blackColor];
     NSString *path = [[NSBundle mainBundle]bundlePath];
@@ -367,15 +366,25 @@
     [self.webView loadHTMLString:model.htmlCodeStr baseURL:baseUrl];
     [cell addSubview:self.webView];
     [self loadHtmlToWebView];
-//    cell.backgroundColor = [UIColor redColor];
+//    cell.backgroundColor = [UIColor blackColor];
     
     UIView *backgroundView = [[UIView alloc]init];
-    backgroundView.frame = CGRectMake(0, 0, KScreenWidth-20, KScreenHeight-64-40);
+    backgroundView.frame = CGRectMake(20, 20, KScreenWidth-40, KScreenHeight-64-20);
     UITapGestureRecognizer *tapGesture1 = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(viewClick:)];
     backgroundView.tag=indexPath.row;
     backgroundView.userInteractionEnabled=YES;
     [backgroundView addGestureRecognizer:tapGesture1];
     [cell addSubview:backgroundView];
+    
+    UIButton *deleteBtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    deleteBtn.titleLabel.font = [UIFont systemFontOfSize:11.0f];
+    deleteBtn.frame = CGRectMake(5, 5, 30, 30);
+//    deleteBtn.backgroundColor = [UIColor redColor];
+    deleteBtn.tag = indexPath.row;
+    [deleteBtn setBackgroundImage:[UIImage imageNamed:@"delete"] forState:UIControlStateNormal];
+    //    [deleteBtn setTitle:@"delete" forState:UIControlStateNormal];
+    [deleteBtn addTarget:self action:@selector(deleteClick:) forControlEvents:UIControlEventTouchUpInside];
+    [cell addSubview:deleteBtn];
     return cell;
 }
 -(void)viewClick:(UITapGestureRecognizer *)recognizer
@@ -392,12 +401,37 @@
     vc.editNowHtmlCodeStr = model.htmlCodeStr;
     [self.navigationController pushViewController:vc animated:YES];
 }
+-(void)deleteClick:(UIButton *)button
+{
+//    UIAlertView *alert = [[UIAlertView alloc]initWithTitle:@"Delete" message:nil delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"OK", nil];
+//    [alert show];
+    UIButton *deleteBtn = [[UIButton alloc]init];
+    deleteBtn.tag = button.tag;
+    NSLog(@"%ld",(long)deleteBtn.tag);
+    DetailsModel *model = [self.detailsArray objectAtIndex:deleteBtn.tag];
+    
+    [DBDaoHelper deleteDetailsWithsql:model.detailsIdStr];
+    
+    //查询details表
+    self.detailsArray = [DBDaoHelper selectDetailsDataBySummaryId:self.maxSummaryIdStr];
+    [self.collectionView reloadData];
+}
+////根据被点击按钮的索引处理点击事件
+//-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+//{
+//    NSLog(@"clickButtonAtIndex");
+//}
+////AlertView的取消按钮的事件
+//-(void)alertViewCancel:(UIAlertView *)alertView
+//{
+//    NSLog(@"alertViewCancel");
+//}
 #pragma mark --UICollectionViewDelegateFlowLayout
 //定义每个UICollectionView 的大小
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     
-    return CGSizeMake(KScreenWidth-20, KScreenHeight-64-20);
+    return CGSizeMake(KScreenWidth, KScreenHeight-64-40);
 }
 //定义每个UICollectionView 的间距
 -(UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section

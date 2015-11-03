@@ -96,3 +96,6 @@ img {
     z-index: 999;
     -webkit-animation: start 1.3s infinite ease-in-out;
 }
+.showAudio{
+    display:none;
+}

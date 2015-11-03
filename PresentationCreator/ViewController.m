@@ -12,10 +12,12 @@
 #import "ProjectModel.h"
 #import "DBDaoHelper.h"
 
-@interface ViewController ()
+@interface ViewController ()<UIAlertViewDelegate>
 @property (nonatomic, strong) UITableView *tabView;
 @property (nonatomic, strong) UITextField *DBtextField;
 @property (nonatomic, strong) NSMutableArray *mutableArray;
+@property (nonatomic, strong) NSString *rowId;
+
 @end
 
 @implementation ViewController
@@ -109,6 +111,31 @@
     vc.showTemplateIdStr = str;
     
     [self.navigationController pushViewController:vc animated:YES];
+}
+
+-(void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath{
+    if(editingStyle == UITableViewCellEditingStyleDelete){
+        UIAlertView *alert = [[UIAlertView alloc]initWithTitle:@"Please confirm" message:@"Do you want to delete" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"OK", nil];
+        [alert show];
+        
+        ProjectModel *model = [_mutableArray objectAtIndex:indexPath.row];
+        //  [DBDaoHelper deleteSummaryById:model.summaryId];
+        NSString *summaryId = [NSString stringWithFormat:@"%ld",(long)model.tableId];
+        _rowId = summaryId;
+        
+    }
+}
+
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
+    NSLog(@"buttonIndex:%ld", (long)buttonIndex);
+    if (buttonIndex == 0) {
+        
+    }else if(buttonIndex == 1){
+        [DBDaoHelper deleteSummaryById:_rowId];
+        self.mutableArray = [DBDaoHelper selectTableArray];
+        [self.tabView reloadData];
+    }
+    
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];

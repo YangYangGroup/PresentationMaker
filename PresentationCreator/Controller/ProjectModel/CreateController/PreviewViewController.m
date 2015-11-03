@@ -51,26 +51,26 @@
     //    [rightbtn setBackgroundImage:[UIImage imageNamed:@"set"] forState:UIControlStateNormal];
     self.navigationItem.leftBarButtonItem = backItem;
     
-    UIButton *btnRight = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    //    btnRight.titleLabel.font = [UIFont systemFontOfSize:15.0f];
-    //    btnLeft.backgroundColor = [UIColor redColor];
-    btnRight.frame = CGRectMake(0, 0, 60, 30);
-    [btnRight setTitle:@"Save" forState:UIControlStateNormal];
-    [btnRight addTarget:self action:@selector(doneClick) forControlEvents:UIControlEventTouchUpInside];
-    UIBarButtonItem *doneItem = [[UIBarButtonItem alloc]initWithCustomView:btnRight];
-    self.navigationItem.rightBarButtonItem = doneItem;
+//    UIButton *btnRight = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+//    //    btnRight.titleLabel.font = [UIFont systemFontOfSize:15.0f];
+//    //    btnLeft.backgroundColor = [UIColor redColor];
+//    btnRight.frame = CGRectMake(0, 0, 60, 30);
+//    [btnRight setTitle:@"Save" forState:UIControlStateNormal];
+//    [btnRight addTarget:self action:@selector(doneClick) forControlEvents:UIControlEventTouchUpInside];
+//    UIBarButtonItem *doneItem = [[UIBarButtonItem alloc]initWithCustomView:btnRight];
+//    self.navigationItem.rightBarButtonItem = doneItem;
 }
 -(void)backClick
 {
     [self.navigationController popViewControllerAnimated:YES];
 }
 
--(void)doneClick
-{
-//    [[NSNotificationCenter defaultCenter]postNotificationName:@"newJianting" object:@"0"];
-    self.tabBarController.selectedIndex = 0;//点击按钮回到第一个tabbar
-    
-}
+//-(void)doneClick
+//{
+////    [[NSNotificationCenter defaultCenter]postNotificationName:@"newJianting" object:@"0"];
+//    self.tabBarController.selectedIndex = 0;//点击按钮回到第一个tabbar
+//    
+//}
 //查询summaryhtmlcode 加载到webview 进行总的预览
 -(void)loadDetailsDataToArray{
     NSString *sections = [[NSString alloc] init];

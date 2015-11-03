@@ -31,7 +31,6 @@
 @property (nonatomic, strong) NSString *templateHtmlCode;
 @property (nonatomic, strong) NSMutableArray *detailsArray;//获取details表对象
 
-@property (nonatomic, strong) NSString *maxSummaryIdStr;//取summary表中最大的主键值
 @property (nonatomic, strong) NSString *summaryNameStr;
 @property (nonatomic, strong) NSString *htmlSource;
 
@@ -55,9 +54,15 @@
         //        NSString *str = [NSString stringWithFormat:@"%ld",(long)strInteger];
         NSString *htmlStr = [[NSString alloc]init];
         htmlStr = [DBDaoHelper selectCreationPageString:returnStr];
+
+        // 根据 summary id 查询最大的 page number
+        NSString *maxPageNumber = [DBDaoHelper getMaxPageNumber:self.showSummaryIdStr];
         
-        NSLog(@"%@",htmlStr);
-        [DBDaoHelper insertHtmlToDetailsSummaryIdWith:self.showSummaryIdStr TemplateId:returnStr HtmlCode:htmlStr];
+        // 根据summary id 修改最后一页的page number 为最大的page number
+        [DBDaoHelper updatePageNumberToMaxNumber:self.showSummaryIdStr pageNumber:maxPageNumber];
+        
+        //等待修改 插入
+        [DBDaoHelper insertHtmlToDetailsSummaryIdWith:self.showSummaryIdStr TemplateId:returnStr HtmlCode:htmlStr PageNumber:maxPageNumber];
     }
 }
 -(void)dealloc
@@ -69,7 +74,6 @@
     self.parentViewController.tabBarController.tabBar.hidden = YES;
     //    self.navigationItem.hidesBackButton =YES;//隐藏系统自带导航栏按钮
     self.navigationItem.title=self.summaryNameStr;
-    
     
     
     self.detailsArray = [DBDaoHelper selectDetailsDataBySummaryId:self.showSummaryIdStr];
@@ -84,7 +88,7 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(collectionCellAdd:) name:@"CreationEditNotification" object:nil];
-    self.view.backgroundColor = [UIColor blackColor];
+//    self.view.backgroundColor = [UIColor blackColor];
     [self addNavigation];
     //    [self addFooter];
     [self addCollectionView];
@@ -291,8 +295,8 @@
     
     UICollectionViewFlowLayout *flowLayout=[[UICollectionViewFlowLayout alloc] init];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionHorizontal];
-    flowLayout.footerReferenceSize = CGSizeMake(KScreenWidth-20, KScreenHeight-64-40);//头部.尾部设置
-    self.collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(10, 84, KScreenWidth-20, KScreenHeight-64-40) collectionViewLayout:flowLayout];
+    flowLayout.footerReferenceSize = CGSizeMake(KScreenWidth, KScreenHeight-64-40);//头部.尾部设置
+    self.collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(0, 64, KScreenWidth, KScreenHeight-64-20) collectionViewLayout:flowLayout];
     self.collectionView.backgroundColor = [UIColor whiteColor];
     
     //设置代理
@@ -304,7 +308,7 @@
     [self.collectionView registerClass:[CollectionViewCell class] forCellWithReuseIdentifier:@"cell"];
     [self.collectionView registerClass:[UICollectionReusableView class] forSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"ReusableView"];
     
-    _footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, KScreenWidth-20, KScreenHeight-64-40)];
+    _footerView = [[UIView alloc]initWithFrame:CGRectMake(20, 30, KScreenWidth-40, KScreenHeight-64-30)];
 //    _footerView.layer.borderWidth = 2;
 //    _footerView.layer.cornerRadius = 0;
 //    _footerView.layer.borderColor = [UIColor whiteColor].CGColor;
@@ -312,7 +316,7 @@
     
     //添加界面
     UIButton *addPageBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-    addPageBtn.frame = CGRectMake((KScreenWidth-120)/2, 185, 120, 60);
+    addPageBtn.frame = CGRectMake((KScreenWidth-40-120)/2, 185, 120, 60);
     addPageBtn.tintColor = [UIColor whiteColor];
     addPageBtn.layer.borderWidth = 1;
     addPageBtn.layer.borderColor = [UIColor whiteColor].CGColor;
@@ -378,8 +382,8 @@
     aview.frame = CGRectMake(0, 0, 0, 0);
     [cell addSubview:aview];
     self.webView = [[UIWebView alloc]init];
-    self.webView.frame = CGRectMake(0, 0, KScreenWidth-20, KScreenHeight-64-40);
-    self.webView.backgroundColor = [UIColor blackColor];
+    self.webView.frame = CGRectMake(20, 20, KScreenWidth-40, KScreenHeight-64-20);
+//    self.webView.backgroundColor = [UIColor blackColor];
     NSString *path = [[NSBundle mainBundle]bundlePath];
     NSURL *baseUrl = [NSURL fileURLWithPath:path];
     [self.webView loadHTMLString:model.htmlCodeStr baseURL:baseUrl];
@@ -390,13 +394,23 @@
     [self loadHtmlToWebView];
     
     UIView *backgroundView = [[UIView alloc]init];
-    backgroundView.frame = CGRectMake(0, 0, KScreenWidth-20, KScreenHeight-64-40);
+    backgroundView.frame = CGRectMake(20, 20, KScreenWidth-20, KScreenHeight-64-40);
     UITapGestureRecognizer *tapGesture1 = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(viewClick:)];
     backgroundView.tag=indexPath.row;
     backgroundView.userInteractionEnabled=YES;
     [backgroundView addGestureRecognizer:tapGesture1];
     [cell addSubview:backgroundView];
-        cell.backgroundColor = [UIColor blackColor];
+//        cell.backgroundColor = [UIColor blackColor];
+    
+    UIButton *deleteBtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    deleteBtn.titleLabel.font = [UIFont systemFontOfSize:11.0f];
+    deleteBtn.frame = CGRectMake(5, 5, 30, 30);
+//    deleteBtn.backgroundColor = [UIColor redColor];
+    deleteBtn.tag = indexPath.row;
+    [deleteBtn setBackgroundImage:[UIImage imageNamed:@"delete"] forState:UIControlStateNormal];
+//    [deleteBtn setTitle:@"delete" forState:UIControlStateNormal];
+    [deleteBtn addTarget:self action:@selector(deleteClick:) forControlEvents:UIControlEventTouchUpInside];
+    [cell addSubview:deleteBtn];
     return cell;
 }
 -(void)viewClick:(UITapGestureRecognizer *)recognizer
@@ -413,12 +427,25 @@
     vc.editNowHtmlCodeStr = model.htmlCodeStr;
     [self.navigationController pushViewController:vc animated:YES];
 }
+-(void)deleteClick:(UIButton *)button
+{
+    UIButton *deleteBtn = [[UIButton alloc]init];
+    deleteBtn.tag = button.tag;
+    NSLog(@"%ld",(long)deleteBtn.tag);
+    DetailsModel *model = [self.detailsArray objectAtIndex:deleteBtn.tag];
+    
+    [DBDaoHelper deleteDetailsWithsql:model.detailsIdStr];
+    
+    //查询details表
+    self.detailsArray = [DBDaoHelper selectDetailsDataBySummaryId:self.showSummaryIdStr];
+    [self.collectionView reloadData];
+}
 #pragma mark --UICollectionViewDelegateFlowLayout
 //定义每个UICollectionView 的大小
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     
-    return CGSizeMake(KScreenWidth-20, KScreenHeight-64-40);
+    return CGSizeMake(KScreenWidth, KScreenHeight-64-40);
 }
 //定义每个UICollectionView 的间距
 -(UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section

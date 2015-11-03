@@ -30,8 +30,7 @@
 
 
 @property (nonatomic, strong) NSString *textIndex;
-@property (nonatomic, strong) UITextField *txtField;
-
+@property (nonatomic, strong) UITextView *textView;
 @end
 
 @implementation EditNowViewController
@@ -42,109 +41,20 @@
 }
 - (void)viewWillDisappear:(BOOL)animated {
     self.parentViewController.tabBarController.tabBar.hidden = NO;
-    //    self.navigationItem.hidesBackButton =NO;//隐藏系统自带导航栏按钮
 }
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
+    [self setAudioSession];
     self.navigationItem.title= @"Edit Your Style";
     _fullPath = [[NSString alloc]init];
     _audioPath = [[NSString alloc]init];
-
     [self addNewWebView];
     [self addAudioButton];
-
+    
     _buttonFlag = FALSE;
 }
--(void)addAudioButton{
-    UIButton *audioButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    audioButton.frame = CGRectMake(2, KScreenHeight - 64 + 16, KScreenWidth-4, 46);
-    [audioButton setTitle:@"Record a audio" forState:UIControlStateNormal];
-    [audioButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    [audioButton setBackgroundColor:[UIColor grayColor]];
-   
-    [audioButton addTarget:self action:@selector(showAudioView) forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:audioButton];
-}
 
--(void)showAudioView{
-    _aduioViewControl = [[UIControl alloc]initWithFrame:CGRectMake(0, 64, self.view.bounds.size.width, self.view.bounds.size.height-64)];
-    _aduioViewControl.backgroundColor = [UIColor lightGrayColor];
-    _aduioViewControl.alpha = 0.97;
-//    [_aduioViewControl addTarget:self action:@selector(removeView) forControlEvents:UIControlEventTouchUpInside];
-    _startButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    _startButton.frame = CGRectMake(KScreenWidth * 0.25 - 60 , KScreenHeight * 0.5 + 40, 120, 120);
-    [_startButton setTitle:@"START" forState:UIControlStateNormal];
-    [_startButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    _startButton.backgroundColor = [UIColor redColor];
-    [_startButton.layer setMasksToBounds:YES];
-    [_startButton.layer setBorderWidth:5.0];
-    [_startButton.layer setCornerRadius:60.0];
-    _startButton.titleLabel.font = [UIFont systemFontOfSize:22.0];
-    _startButton.layer.borderColor = [UIColor whiteColor].CGColor;
-    [_startButton addTarget:self action:@selector(startRecord) forControlEvents:UIControlEventTouchUpInside];
-    [_aduioViewControl addSubview:_startButton];
-    
-    UIButton *backButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    backButton.frame = CGRectMake(KScreenWidth * 0.75 - 60 , KScreenHeight * 0.5 + 40, 120, 120);
-    [backButton setTitle:@"BACK" forState:UIControlStateNormal];
-    [backButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    backButton.backgroundColor = [UIColor darkGrayColor];
-    backButton.titleLabel.font = [UIFont systemFontOfSize:22.0];
-    [backButton.layer setMasksToBounds:YES];
-    
-    [backButton.layer setBorderWidth:5.0];
-    [backButton.layer setCornerRadius:60.0];
-    backButton.layer.borderColor = [UIColor whiteColor].CGColor;
-    [backButton addTarget:self action:@selector(closeAudioView) forControlEvents:UIControlEventTouchUpInside];
-    
-    // progess bar
-    _audioPower = [[UIProgressView alloc]init];
-    _audioPower.frame = CGRectMake(30, KScreenHeight * 0.3, KScreenWidth - 60, 30);
-    _audioPower.transform = CGAffineTransformMakeScale(1.0f, 13.0f);
-    [_aduioViewControl addSubview:_startButton];
-    [_aduioViewControl addSubview:backButton];
-    [_aduioViewControl addSubview:_audioPower];
-    
-    [self.view addSubview:_aduioViewControl];
-   // [self.view bringSubviewToFront:_aduioViewControl];
-   
-
-}
-
--(void)startRecord{
-    
-    if(!_buttonFlag){
-        _audioName = [[NSString alloc]init];
-        _audioName =  [NSString stringWithFormat:@"%d.wav",arc4random() % 1000000];
-        if (![self.audioRecorder isRecording]) {
-            [self.audioRecorder record];//首次使用应用时如果调用record方法会询问用户是否允许使用麦克风
-            self.timer.fireDate=[NSDate distantPast];
-        }
-      
-        [_startButton setTitle:@"STOP" forState:UIControlStateNormal];
-        _buttonFlag = TRUE;
-    }else{
-        [self.audioRecorder stop];
-        self.timer.fireDate=[NSDate distantFuture];
-        self.audioPower.progress=0.0;
-        
-        [_startButton setTitle:@"START" forState:UIControlStateNormal];
-        _buttonFlag = FALSE;
-        
-    }
-}
--(void)closeAudioView{
-    [self editAudioComponent];
-    [_aduioViewControl removeFromSuperview];
-    _aduioViewControl = nil;
-//    if(_audioPath == nil || [_audioPath isEqualToString:@""]){
-//       
-//    }else{
-//        
-//
-//    }
-}
 -(void)addNewWebView
 {
     UIView *aView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, 0, 0)];
@@ -188,7 +98,10 @@
         NSLog(@"input mySt:%@", args[1]);
         NSString *htmlVal = [[NSString alloc]initWithFormat:@"%@",args[0]];
         NSString *htmlIndex =[[NSString alloc]initWithFormat:@"%@",args[1]];
-        [self editTextComponent:htmlVal :htmlIndex];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self editTextComponent:htmlVal :htmlIndex];
+        });
+        
         
         NSLog(@"-------End Text-------");
         
@@ -211,8 +124,8 @@
 }
 //修改文字的时候
 -(void)editTextComponent:(NSString *)param1 : (NSString *)param2{
-    
-    _editTextViewControl = [[UIControl alloc]initWithFrame:CGRectMake(0, 64, self.view.bounds.size.width, self.view.bounds.size.height-64)];
+    self.navigationController.navigationBarHidden=YES;
+    _editTextViewControl = [[UIControl alloc]initWithFrame:CGRectMake(0, 20, self.view.bounds.size.width, self.view.bounds.size.height-20)];
     _editTextViewControl.backgroundColor = [UIColor grayColor];
     
     
@@ -221,20 +134,24 @@
     titleLabel.text = @"Please type your word:";
     [_editTextViewControl addSubview:titleLabel];
     
-    _txtField = [[UITextField alloc]initWithFrame:CGRectMake(20, 60, KScreenWidth-40, KScreenHeight *0.1)];
-//    txtView.delegate = self;
-  //  txtView.adjustsFontSizeToFitWidth = YES;
-    _txtField.backgroundColor = [UIColor whiteColor];
+    _textView = [[UITextView alloc]initWithFrame:CGRectMake(20, 60, KScreenWidth-40, KScreenHeight *0.1)];
+   // _textView.clearButtonMode = UITextFieldViewModeWhileEditing;
+   // _textView.selected = YES;
+    //    txtView.delegate = self;
+    //  txtView.adjustsFontSizeToFitWidth = YES;
+    _textView.backgroundColor = [UIColor whiteColor];
     NSString *textStr = [param1 stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-   // NSString *mytt= [[NSString alloc]initWithFormat:textStr];
-    _txtField.text = textStr;
+    // NSString *mytt= [[NSString alloc]initWithFormat:textStr];
+    _textView.text = textStr;
     //[txtView becomeFirstResponder];
-    [_txtField.layer setMasksToBounds:YES];
-    [_txtField.layer setCornerRadius:6.0];
-    [_editTextViewControl addSubview:_txtField];
+    [_textView.layer setMasksToBounds:YES];
+    _textView.delegate = self;
+    [_textView becomeFirstResponder];
+    [_textView.layer setCornerRadius:6.0];
+    [_editTextViewControl addSubview:_textView];
     
     UIButton *okButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    okButton.frame = CGRectMake(20 , 30 + KScreenHeight*0.1 + 40, KScreenWidth-40, 40);
+    okButton.frame = CGRectMake(20 , 30 + KScreenHeight*0.1 + 40, KScreenWidth*0.5-30, 40);
     [okButton setTitle:@"OK" forState:UIControlStateNormal];
     [okButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     okButton.backgroundColor = [UIColor darkGrayColor];
@@ -250,16 +167,45 @@
     
     [_editTextViewControl addSubview:okButton];
     
+    
+    UIButton *cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    cancelButton.frame = CGRectMake(10 + KScreenWidth * 0.5 , 30 + KScreenHeight*0.1 + 40, KScreenWidth * 0.5 -30, 40);
+    [cancelButton setTitle:@"Cancel" forState:UIControlStateNormal];
+    [cancelButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    cancelButton.backgroundColor = [UIColor lightGrayColor];
+    cancelButton.titleLabel.font = [UIFont systemFontOfSize:18.0];
+    [cancelButton.layer setMasksToBounds:YES];
+    
+    [cancelButton.layer setBorderWidth:1.0];
+    [cancelButton.layer setCornerRadius:7.0];
+    cancelButton.layer.borderColor = [UIColor whiteColor].CGColor;
+    
+    [cancelButton addTarget:self action:@selector(exitEditText) forControlEvents:UIControlEventTouchUpInside];
+    
+    [_editTextViewControl addSubview:cancelButton];
+    
     [self.view addSubview:_editTextViewControl];
-   
- }
+}
+-(void)textViewDidBeginEditing:(UITextView *)textView{
+    NSInteger len = [textView.text length];
+    
+    textView.selectedRange = NSMakeRange(0, len);
+}
+
+-(void)exitEditText{
+    [_editTextViewControl removeFromSuperview];
+    _editTextViewControl = nil;
+    self.navigationController.navigationBarHidden=NO;
+}
 
 -(void)saveTextData{
+    self.navigationController.navigationBarHidden=NO;
+
     NSString *str = @"var field = document.getElementsByClassName('text_element')[";
     str = [str stringByAppendingString:_textIndex];
     str = [str stringByAppendingString:@"];"];
     str = [str stringByAppendingString:@" field.innerHTML='"];
-    str = [str stringByAppendingString:_txtField.text];
+    str = [str stringByAppendingString:_textView.text];
     str = [str stringByAppendingString:@"';"];
     
     NSLog(@"final javascript:%@",str);
@@ -281,7 +227,7 @@
     
     NSLog(@"final javascript:%@",str);
     [_webView stringByEvaluatingJavaScriptFromString:str];//js字符串通过这个方法传递到webview中的html并执行此js
-     [self getHtmlCodeClick];
+    [self getHtmlCodeClick];
 }
 //选择图片
 -(void)backgroundClick
@@ -315,13 +261,13 @@
     
     _fullPath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:imageName];
     NSLog(@"%@",_fullPath);
-//    [self loadHtmlToWebView];
-   
-     // 将图片写入文件
+    //    [self loadHtmlToWebView];
+    
+    // 将图片写入文件
     [imageData writeToFile:_fullPath atomically:NO];
     
-   
-     NSLog(@"_imgIndex_imgIndex:::%@",_imgIndex);
+    
+    NSLog(@"_imgIndex_imgIndex:::%@",_imgIndex);
     [self editImageComponent:_fullPath :_imgIndex];
 }
 #pragma mark - image picker delegte
@@ -394,9 +340,94 @@
     }
 }
 
+#pragma mark - addAudio
+//点击录音按钮，弹出录音画面
+-(void)addAudioButton{
+    UIButton *audioButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    audioButton.frame = CGRectMake(2, KScreenHeight - 64 + 16, KScreenWidth-4, 46);
+    [audioButton setTitle:@"Record a audio" forState:UIControlStateNormal];
+    [audioButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [audioButton setBackgroundColor:[UIColor grayColor]];
+    
+    [audioButton addTarget:self action:@selector(showAudioView) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:audioButton];
+}
+-(void)showAudioView{
+    self.navigationController.navigationBarHidden = YES;
+    _aduioViewControl = [[UIControl alloc]initWithFrame:CGRectMake(0, 20, self.view.bounds.size.width, self.view.bounds.size.height-20)];
+    _aduioViewControl.backgroundColor = [UIColor lightGrayColor];
+//    _aduioViewControl.alpha = 0.97;
+    //    [_aduioViewControl addTarget:self action:@selector(removeView) forControlEvents:UIControlEventTouchUpInside];
+    _startButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    _startButton.frame = CGRectMake(KScreenWidth * 0.25 - 60 , KScreenHeight * 0.5 + 40, 120, 120);
+    [_startButton setTitle:@"START" forState:UIControlStateNormal];
+    [_startButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    _startButton.backgroundColor = [UIColor redColor];
+    [_startButton.layer setMasksToBounds:YES];
+    [_startButton.layer setBorderWidth:5.0];
+    [_startButton.layer setCornerRadius:60.0];
+    _startButton.titleLabel.font = [UIFont systemFontOfSize:22.0];
+    _startButton.layer.borderColor = [UIColor whiteColor].CGColor;
+    [_startButton addTarget:self action:@selector(startRecord) forControlEvents:UIControlEventTouchUpInside];
+    [_aduioViewControl addSubview:_startButton];
+    
+    UIButton *backButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    backButton.frame = CGRectMake(KScreenWidth * 0.75 - 60 , KScreenHeight * 0.5 + 40, 120, 120);
+    [backButton setTitle:@"BACK" forState:UIControlStateNormal];
+    [backButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    backButton.backgroundColor = [UIColor darkGrayColor];
+    backButton.titleLabel.font = [UIFont systemFontOfSize:22.0];
+    [backButton.layer setMasksToBounds:YES];
+    
+    [backButton.layer setBorderWidth:5.0];
+    [backButton.layer setCornerRadius:60.0];
+    backButton.layer.borderColor = [UIColor whiteColor].CGColor;
+    [backButton addTarget:self action:@selector(closeAudioView) forControlEvents:UIControlEventTouchUpInside];
+    
+    // progess bar
+    _audioPower = [[UIProgressView alloc]init];
+    _audioPower.frame = CGRectMake(30, KScreenHeight * 0.3, KScreenWidth - 60, 30);
+    _audioPower.transform = CGAffineTransformMakeScale(1.0f, 13.0f);
+    [_aduioViewControl addSubview:_startButton];
+    [_aduioViewControl addSubview:backButton];
+    [_aduioViewControl addSubview:_audioPower];
+    
+    [self.view addSubview:_aduioViewControl];
+    // [self.view bringSubviewToFront:_aduioViewControl];
+    
+    
+}
+-(void)startRecord{
+    
+    if(!_buttonFlag){
+        _audioName = [[NSString alloc]init];
+        _audioName =  [NSString stringWithFormat:@"%d.wav",arc4random() % 1000000];
+        if (![self.audioRecorder isRecording]) {
+            [self.audioRecorder record];//首次使用应用时如果调用record方法会询问用户是否允许使用麦克风
+            self.timer.fireDate=[NSDate distantPast];
+        }
+        
+        [_startButton setTitle:@"STOP" forState:UIControlStateNormal];
+        _buttonFlag = TRUE;
+    }else{
+        [self.audioRecorder stop];
+        self.timer.fireDate=[NSDate distantFuture];
+        self.audioPower.progress=0.0;
+        
+        [_startButton setTitle:@"START" forState:UIControlStateNormal];
+        _buttonFlag = FALSE;
+        
+    }
+}
+-(void)closeAudioView{
+    [self editAudioComponent];
+    [_aduioViewControl removeFromSuperview];
+    _aduioViewControl = nil;
+    self.navigationController.navigationBarHidden = NO;
+}
 // 把录好的音频，通过native 代码调用js文件，替换当前的
 -(void)editAudioComponent{
-    NSString *str = @"var field = document.getElementsByTagName('audio')[0];";
+    NSString *str = @"var imgAudio = document.getElementsByClassName('showAudio')[0]; imgAudio.className='';imgAudio.className='audioCtrl'; var field = document.getElementsByTagName('audio')[0];";
     str = [str stringByAppendingString:@" field.src='"];
     str = [str stringByAppendingString:_audioPath];
     str = [str stringByAppendingString:@"'; field.play();"];
@@ -426,8 +457,8 @@
  */
 -(NSURL *)getSavePath{
     
-//    NSString *audioName = [NSString stringWithFormat:@"%d.wav",arc4random() % 1000000];
-//    NSString *audioName1 = @"myAudio.wav";
+    //    NSString *audioName = [NSString stringWithFormat:@"%d.wav",arc4random() % 1000000];
+    //    NSString *audioName1 = @"myAudio.wav";
     NSString *urlStr=[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
     
     urlStr=[urlStr stringByAppendingPathComponent:_audioName];
@@ -467,7 +498,7 @@
     //创建录音文件保存路径
     NSURL *url=[self getSavePath];
     if (!_audioRecorder) {
-       
+        
         //创建录音格式设置
         NSDictionary *setting=[self getAudioSetting];
         //创建录音机
@@ -491,7 +522,7 @@
 -(AVAudioPlayer *)audioPlayer{
     NSURL *url = [self getSavePath];
     if (!_audioPlayer) {
-       
+        
         NSError *error=nil;
         _audioPlayer=[[AVAudioPlayer alloc]initWithContentsOfURL:url error:&error];
         
@@ -541,20 +572,19 @@
     }
     NSLog(@"录音完成!");
 }
-
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
 
 /*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
+ #pragma mark - Navigation
+ 
+ // In a storyboard-based application, you will often want to do a little preparation before navigation
+ - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+ // Get the new view controller using [segue destinationViewController].
+ // Pass the selected object to the new view controller.
+ }
+ */
 
 @end

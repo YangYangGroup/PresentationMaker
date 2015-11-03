@@ -13,4 +13,5 @@
 @property(nonatomic,strong) NSString *templateIdStr;
 @property(nonatomic,strong) NSString *detailsIdStr;
 @property(nonatomic,strong) NSString *htmlCodeStr;
+@property(nonatomic,strong) NSString *pageNumberStr;
 @end

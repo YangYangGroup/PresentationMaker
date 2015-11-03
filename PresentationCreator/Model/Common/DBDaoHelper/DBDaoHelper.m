@@ -17,7 +17,7 @@
     //summary_name tableview创建ppt的名称 content_html最终生成的总的用于演示的html代码
     BOOL result2 = [db executeUpdate:@"CREATE TABLE IF NOT EXISTS 'PPT_PRODUCT_SUMMARY'('summary_id'INTEGER PRIMARY KEY AUTOINCREMENT,'summary_name'varchar,'content_html'varchar)"];
     //details_id主键 summary_id 外键关联到PPT_PRODUCT_SUMMARY表的主键 template_id关联到PPT_PRODUCT_template表的主键
-    BOOL result3 = [db executeUpdate:@"CREATE TABLE IF NOT EXISTS 'PPT_PRODUCT_DETAILS'('details_id'INTEGER PRIMARY KEY AUTOINCREMENT,'summary_id'integer,'template_id'integer,'html_code'varchar)"];
+    BOOL result3 = [db executeUpdate:@"CREATE TABLE IF NOT EXISTS 'PPT_PRODUCT_DETAILS'('details_id'INTEGER PRIMARY KEY AUTOINCREMENT,'summary_id'integer,'template_id'integer,'html_code'varchar,'page_number'integer)"];
     [db close];
     if (result1&&result2&&result3) {
         return YES;
@@ -106,17 +106,18 @@
 }
 
 //插入TABLE_TEMPLATE的html代码
-+(BOOL)insertHtmlToDetailsSummaryIdWith:(NSString *)summaryid TemplateId:(NSString *)templateid HtmlCode:(NSString *)htmlcode{
++(BOOL)insertHtmlToDetailsSummaryIdWith:(NSString *)summaryid TemplateId:(NSString *)templateid HtmlCode:(NSString *)htmlcode PageNumber:(NSString *)pagenumber{
     
     FMDatabase *db =[DBHelper openDatabase];
-    BOOL result = [db executeUpdate:@"insert into 'PPT_PRODUCT_DETAILS'('summary_id','template_id','html_code') values (?,?,?)",summaryid,templateid,htmlcode];
+    BOOL result = [db executeUpdate:@"insert into 'PPT_PRODUCT_DETAILS'('summary_id','template_id','html_code','page_number') values (?,?,?,?)", summaryid, templateid, htmlcode, pagenumber];
     [db close];
     return result;
 }
 // 根据summary id 查询 PPT_PRODUCT_DETAILS 表中对应的结果集
 +(NSMutableArray *)selectDetailsDataBySummaryId:(NSString *)summaryId{
     FMDatabase *db = [DBHelper openDatabase];
-    NSString *sql = [NSString stringWithFormat:@"SELECT * FROM PPT_PRODUCT_DETAILS WHERE SUMMARY_ID = %@", summaryId];
+    //order by 排序 从小到大
+    NSString *sql = [NSString stringWithFormat:@"SELECT * FROM PPT_PRODUCT_DETAILS WHERE SUMMARY_ID = %@ order by PAGE_NUMBER", summaryId];
     NSMutableArray *detailsArray = [[NSMutableArray alloc]init];
     FMResultSet *result = [db executeQuery:sql];
     while (result.next) {
@@ -125,6 +126,7 @@
         detailsModel.summaryIdStr = [result stringForColumn:@"summary_id"];
         detailsModel.templateIdStr = [result stringForColumn:@"template_id"];
         detailsModel.htmlCodeStr = [result stringForColumn:@"html_code"];
+        detailsModel.pageNumberStr = [result stringForColumn:@"PAGE_NUMBER"];
         [detailsArray addObject:detailsModel];
     }
     [db close];
@@ -161,5 +163,51 @@
     [db close];
     return nil;
     
+}
+//删除
++(void)deleteDetailsWithsql:(NSString *)detailsId
+{
+    FMDatabase *db = [DBHelper openDatabase];
+    [db executeUpdate:@"DELETE FROM PPT_PRODUCT_DETAIlS WHERE details_id= ?",detailsId];
+    [db close];
+}
+// 根据 summary id 查询最大的 page number
++(NSString *)getMaxPageNumber:(NSString *)summaryId{
+    FMDatabase *db =[DBHelper openDatabase];
+    FMResultSet *result = [db executeQuery:@"SELECT  MAX(PAGE_NUMBER) FROM PPT_PRODUCT_DETAIlS WHERE SUMMARY_ID = ?", summaryId];
+    
+    while (result.next)
+    {
+        NSString *str = [result stringForColumnIndex:0];
+        [db close];
+        return str;
+    }
+    [db close];
+    return nil;
+}
+
+// 根据summary id 修改最后一页的page number 为最大的page number
++(BOOL)updatePageNumberToMaxNumber:(NSString *)summaryId pageNumber:(NSString *)pagenumber{
+    FMDatabase *db =[DBHelper openDatabase];
+    NSInteger maxNum = [pagenumber integerValue];
+    maxNum ++;
+    NSString *num = [NSString stringWithFormat:@"%ld", (long)maxNum];
+    BOOL result = [db executeUpdate:@"UPDATE 'PPT_PRODUCT_DETAIlS' set PAGE_NUMBER = ? WHERE SUMMARY_ID =? and PAGE_NUMBER = ?", num, summaryId,pagenumber];
+    [db close];
+    return result;
+}
+// 根据summary id 删除 summary 表的记录
++(BOOL)deleteSummaryById:(NSString *)summaryId{
+    FMDatabase *db =[DBHelper openDatabase];
+    BOOL result1 = [db executeUpdate:@"DELETE FROM PPT_PRODUCT_DETAILS WHERE SUMMARY_ID =?",summaryId];
+    if(result1){
+       BOOL result2 = [db executeUpdate:@"DELETE FROM PPT_PRODUCT_SUMMARY WHERE SUMMARY_ID =?",summaryId];
+        if (result2) {
+            [db close];
+            return TRUE;
+        }
+    }
+    [db close];
+    return FALSE;
 }
 @end

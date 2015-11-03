@@ -16,6 +16,10 @@
 @property (nonatomic, strong) NSArray *imageArray;
 @property (nonatomic, strong) UIWebView *webView;
 @property (nonatomic, strong) NSString *maxSummaryIdStr;//取summary表中最大的主键值
+//@property (nonatomic, strong) NSArray *firstImageArray;
+//@property (nonatomic, strong) NSArray *secondImageArray;
+//@property (nonatomic, strong) NSArray *firstHtmlArray;
+//@property (nonatomic, strong) NSArray *secondHtmlArray;
 
 @end
 
@@ -26,7 +30,15 @@
     // Do any additional setup after loading the view from its nib.
     [self addNavigation];
     [self addCollectionView];
-    
+ 
+    if (self.selectTemplateIndex == 0) {
+        self.htmlArray = [NSArray arrayWithObjects:@"template_1.html",@"template_2.html",@"template_3.html",@"template_4.html",@"template_5.html",nil];
+        self.imageArray = [NSArray arrayWithObjects:[UIImage imageNamed:@"IMG_1"],[UIImage imageNamed:@"IMG_2"],[UIImage imageNamed:@"IMG_3"],[UIImage imageNamed:@"IMG_4"],[UIImage imageNamed:@"IMG_5"],nil];
+        
+    }else if (self.selectTemplateIndex == 1){
+        self.htmlArray = [NSArray arrayWithObjects:@"template_6.html",@"template_7.html",@"template_8.html",@"template_9.html",@"template_10.html",nil];
+        self.imageArray = [NSArray arrayWithObjects:[UIImage imageNamed:@"IMG_6"],[UIImage imageNamed:@"IMG_7"],[UIImage imageNamed:@"IMG_8"],[UIImage imageNamed:@"IMG_9"],[UIImage imageNamed:@"IMG_10"],nil];
+    }
 }
 -(void)addNavigation
 {
@@ -68,8 +80,8 @@
     [self.collectionView registerClass:[AddPageCollectionViewCell class] forCellWithReuseIdentifier:@"cell"];
     [self.collectionView registerClass:[UICollectionReusableView class] forSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"ReusableView"];
     
-    self.htmlArray = [NSArray arrayWithObjects:@"template_1.html",@"template_2.html",@"template_3.html",@"template_4.html",@"template_5.html",@"template_6.html",@"template_7.html",@"template_8.html",@"template_9.html",@"template_10.html",nil];
-    self.imageArray = [NSArray arrayWithObjects:[UIImage imageNamed:@"IMG_1"],[UIImage imageNamed:@"IMG_2"],[UIImage imageNamed:@"IMG_3"],[UIImage imageNamed:@"IMG_4"],[UIImage imageNamed:@"IMG_5"],[UIImage imageNamed:@"IMG_6"],[UIImage imageNamed:@"IMG_7"],[UIImage imageNamed:@"IMG_8"],[UIImage imageNamed:@"IMG_9"],[UIImage imageNamed:@"IMG_10"],nil];
+//    self.htmlArray = [NSArray arrayWithObjects:@"template_1.html",@"template_2.html",@"template_3.html",@"template_4.html",@"template_5.html",@"template_6.html",@"template_7.html",@"template_8.html",@"template_9.html",@"template_10.html",nil];
+//    self.imageArray = [NSArray arrayWithObjects:[UIImage imageNamed:@"IMG_1"],[UIImage imageNamed:@"IMG_2"],[UIImage imageNamed:@"IMG_3"],[UIImage imageNamed:@"IMG_4"],[UIImage imageNamed:@"IMG_5"],[UIImage imageNamed:@"IMG_6"],[UIImage imageNamed:@"IMG_7"],[UIImage imageNamed:@"IMG_8"],[UIImage imageNamed:@"IMG_9"],[UIImage imageNamed:@"IMG_10"],nil];
 }
 
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
@@ -123,14 +135,32 @@
 //    //    NSLog(@"%@",htmlStr);
 //    //    NSLog(@"%ld",(long)maxtsummary);
 //    [DBDaoHelper insertHtmlToDetailsSummaryIdWith:self.maxSummaryIdStr TemplateId:[NSString stringWithFormat:@"%ld",strInteger] HtmlCode:htmlStr];
-    NSInteger aa = indexPath.item + 1;
-    NSString *str = [NSString stringWithFormat:@"%ld",(long)aa];
     
-    //    发送通知
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"EditNotification" object:str];
-    [self dismissViewControllerAnimated:YES completion:^{
+    if (self.selectTemplateIndex == 0) {
+        self.htmlArray = [NSArray arrayWithObjects:@"template_1.html",@"template_2.html",@"template_3.html",@"template_4.html",@"template_5.html",nil];
+        NSInteger aa = indexPath.item + 1;
+        NSString *str = [NSString stringWithFormat:@"%ld",(long)aa];
         
-    }];
+        //    发送通知
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"EditNotification" object:str];
+        [self dismissViewControllerAnimated:YES completion:^{
+            
+        }];
+        
+        
+    }else if (self.selectTemplateIndex == 1){
+        self.htmlArray = [NSArray arrayWithObjects:@"template_6.html",@"template_7.html",@"template_8.html",@"template_9.html",@"template_10.html",nil];
+        NSInteger aa = indexPath.item + 6;
+        NSString *str = [NSString stringWithFormat:@"%ld",(long)aa];
+        
+        //    发送通知
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"EditNotification" object:str];
+        [self dismissViewControllerAnimated:YES completion:^{
+            
+        }];
+    }
+    
+    
     
     
 //    vc.detailsIdStr = [NSString stringWithFormat:@"%ld",(long)strInteger];

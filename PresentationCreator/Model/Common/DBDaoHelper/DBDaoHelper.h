@@ -24,7 +24,7 @@
 //查询创作页面数组内容
 +(NSString *)selectCreationPageString:(NSString *)templateId;
 //插入TABLE_TEMPLATE的html代码
-+(BOOL)insertHtmlToDetailsSummaryIdWith:(NSString *)summaryid TemplateId:(NSString *)templateid HtmlCode:(NSString *)htmlcode;
++(BOOL)insertHtmlToDetailsSummaryIdWith:(NSString *)summaryid TemplateId:(NSString *)templateid HtmlCode:(NSString *)htmlcode PageNumber:(NSString *)pagenumber;
 // 根据summary id 查询 PPT_PRODUCT_DETAILS 表中对应的结果集
 +(NSMutableArray *)selectDetailsDataBySummaryId:(NSString *)summaryId;
 
@@ -36,4 +36,12 @@
 +(BOOL)updateDetailsIdWith:(NSString *)detailsid htmlCode:(NSString *)htmlcode;
 // 根据summary id 查询 summary表中html code
 +(NSString *)queryHtmlCodeFromSummary:(NSString *)summaryId;
+//删除
++(void)deleteDetailsWithsql:(NSString *)detailsId;
+// 根据 summary id 查询最大的 page number
++(NSString *)getMaxPageNumber:(NSString *)summaryId;
+// 根据summary id 修改最后一页的page number 为最大的page number
++(BOOL)updatePageNumberToMaxNumber:(NSString *)summaryId pageNumber:(NSString *)pagenumber;
+// 根据summary id 删除 summary 表的记录
++(BOOL)deleteSummaryById:(NSString *)summaryId;
 @end

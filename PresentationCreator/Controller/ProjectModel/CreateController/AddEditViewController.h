@@ -9,5 +9,5 @@
 #import <UIKit/UIKit.h>
 
 @interface AddEditViewController : UIViewController
-
+@property (nonatomic) NSInteger selectTemplateIndex;
 @end

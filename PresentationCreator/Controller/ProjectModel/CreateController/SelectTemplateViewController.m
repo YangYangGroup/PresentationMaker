@@ -8,6 +8,7 @@
 
 #import "SelectTemplateViewController.h"
 #import "SelectTemplateCollectionViewCell.h"
+#import "CreationEditViewController.h"
 
 @interface SelectTemplateViewController ()<UICollectionViewDataSource,UICollectionViewDelegate>
 @property (nonatomic, strong) UICollectionView *collectionView;
@@ -22,9 +23,12 @@
     // Do any additional setup after loading the view from its nib.
     self.navigationItem.title = @"Select A Template";
     [self addCollectionView];
-    self.imageArray = [NSArray arrayWithObjects:[UIImage imageNamed:@"IMG_1"],[UIImage imageNamed:@"IMG_2"],[UIImage imageNamed:@"IMG_3"],[UIImage imageNamed:@"IMG_4"],[UIImage imageNamed:@"IMG_5"],[UIImage imageNamed:@"IMG_6"],[UIImage imageNamed:@"IMG_7"],[UIImage imageNamed:@"IMG_8"],[UIImage imageNamed:@"IMG_9"],[UIImage imageNamed:@"IMG_10"],nil];
+//    self.imageArray = [NSArray arrayWithObjects:[UIImage imageNamed:@"IMG_1"],[UIImage imageNamed:@"IMG_2"],[UIImage imageNamed:@"IMG_3"],[UIImage imageNamed:@"IMG_4"],[UIImage imageNamed:@"IMG_5"],[UIImage imageNamed:@"IMG_6"],[UIImage imageNamed:@"IMG_7"],[UIImage imageNamed:@"IMG_8"],[UIImage imageNamed:@"IMG_9"],[UIImage imageNamed:@"IMG_10"],nil];
+//    
+//    self.titleArray = [NSArray arrayWithObjects:@"ppt1",@"ppt2",@"ppt3",@"ppt4",@"ppt5",@"ppt6",@"ppt7",@"ppt8",@"ppt9",@"ppt10", nil];
+    self.imageArray = [NSArray arrayWithObjects:[UIImage imageNamed:@"IMG_1"],[UIImage imageNamed:@"IMG_6"],nil];
     
-    self.titleArray = [NSArray arrayWithObjects:@"ppt1",@"ppt2",@"ppt3",@"ppt4",@"ppt5",@"ppt6",@"ppt7",@"ppt8",@"9",@"10", nil];
+    self.titleArray = [NSArray arrayWithObjects:@"First Template",@"Second Template", nil];
 }
 #pragma mark - CollectionView
 -(void)addCollectionView
@@ -35,9 +39,9 @@
     UICollectionViewFlowLayout *flowLayout=[[UICollectionViewFlowLayout alloc] init];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionHorizontal];
 //    flowLayout.footerReferenceSize = CGSizeMake(KScreenWidth, KScreenHeight-64);//头部.尾部设置
-    self.collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(10, 84, KScreenWidth-20, KScreenHeight-64-40-44) collectionViewLayout:flowLayout];
+    self.collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(10, 84, KScreenWidth, KScreenHeight-64-40-44) collectionViewLayout:flowLayout];
     self.collectionView.backgroundColor = [UIColor whiteColor];
-    
+    self.collectionView.showsHorizontalScrollIndicator = NO;
     
     //设置代理
     self.collectionView.delegate = self;
@@ -63,7 +67,7 @@
     static NSString *identify = @"cell";
     SelectTemplateCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:identify forIndexPath:indexPath];
     cell.imgView.image = [self.imageArray objectAtIndex:indexPath.item];
-//    cell.titleLable.text = [self.titleArray objectAtIndex:indexPath.item];
+    cell.titleLable.text = [self.titleArray objectAtIndex:indexPath.item];
     
     return cell;
 }
@@ -72,7 +76,7 @@
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     
-    return CGSizeMake(KScreenWidth-40, KScreenHeight-64-40-44);
+    return CGSizeMake(KScreenWidth, KScreenHeight-64-40-44);
 }
 //定义每个UICollectionView 的间距
 -(UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section
@@ -87,7 +91,11 @@
 //UICollectionView被选中时调用的方法
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    SelectTemplateCollectionViewCell * cell = (SelectTemplateCollectionViewCell *)[collectionView cellForItemAtIndexPath:indexPath];
+//    SelectTemplateCollectionViewCell * cell = (SelectTemplateCollectionViewCell *)[collectionView cellForItemAtIndexPath:indexPath];
+    CreationEditViewController *creationVC = [[CreationEditViewController alloc]init];
+    
+    creationVC.selectTemplateIndex = indexPath.item;
+    [self.navigationController pushViewController:creationVC animated:YES];
     
 }
 - (void)didReceiveMemoryWarning {

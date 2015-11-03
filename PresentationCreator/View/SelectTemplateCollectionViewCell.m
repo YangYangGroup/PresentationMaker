@@ -17,11 +17,11 @@
         self.imgView.backgroundColor = [UIColor lightGrayColor];
         [self addSubview:self.imgView];
         
-//        self.titleLable = [[UILabel alloc]initWithFrame:CGRectMake(20, KScreenHeight-64-40-44, KScreenWidth-60, 40)];
-////        self.titleLable.textAlignment = NSTextAlignmentCenter;
-//        self.titleLable.textColor = [UIColor blackColor];
+        self.titleLable = [[UILabel alloc]initWithFrame:CGRectMake(20, KScreenHeight-64-44-100, KScreenWidth-60, 40)];
+        self.titleLable.textAlignment = NSTextAlignmentCenter;
+        self.titleLable.textColor = [UIColor blackColor];
 //        self.titleLable.backgroundColor = [UIColor redColor];
-//        [self addSubview:self.titleLable];
+        [self addSubview:self.titleLable];
     }
     return self;
 }

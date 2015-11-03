@@ -4,7 +4,7 @@
 //
 //  Created by songyang on 15/9/29.
 //  Copyright © 2015年 songyang. All rights reserved.
-// Sam test github
+//
 
 #import "AppDelegate.h"
 #import "ViewController.h"
@@ -50,7 +50,7 @@
     UITabBarItem *firstItem = [[UITabBarItem alloc]initWithTitle:@"MY PPT" image:[UIImage imageNamed:@"my_ppt"] selectedImage:[UIImage imageNamed:@"my_ppt"]];
     viewVC.tabBarItem = firstItem;
     
-    CreationEditViewController *CreationVc = [[CreationEditViewController alloc]init];
+    SelectTemplateViewController *CreationVc = [[SelectTemplateViewController alloc]init];
     UITabBarItem *secondItem = [[UITabBarItem alloc]initWithTitle:@"NEW PPT" image:[UIImage imageNamed:@"new_ppt"] selectedImage:[UIImage imageNamed:@"new_ppt"]];
     CreationVc.tabBarItem = secondItem;
     _secondNav = [[UINavigationController alloc]initWithRootViewController:CreationVc];
